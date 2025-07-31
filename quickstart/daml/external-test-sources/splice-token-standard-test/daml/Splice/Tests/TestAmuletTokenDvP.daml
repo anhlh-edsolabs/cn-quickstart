@@ -52,6 +52,50 @@ data AllocatedOTCTrade = AllocatedOTCTrade
     amuletId : InstrumentId
   deriving (Show, Eq)
 
+testAmuletDvP: Script ()
+testAmuletDvP = do
+  registry <- AmuletRegistry.initialize AmuletRegistry.defaultAmuletRegistryConfig
+  let amuletId = registry.instrumentId
+
+  alice <- allocatePartyExact "alice"
+  bob <- allocatePartyExact "bob"
+
+  -- featured app provider
+  provider <- allocatePartyExact "trading-app-provider-party"
+  AmuletRegistry.featureApp registry provider
+
+  AmuletRegistry.tapLockedAndUnlockedFunds registry alice 1000.0
+  AmuletRegistry.tapLockedAndUnlockedFunds registry bob 1000.0
+
+  let mkTransfer sender receiver amount = Api.Token.AllocationV1.TransferLeg with
+        sender
+        receiver
+        amount
+        instrumentId = amuletId
+        meta = emptyMetadata
+  -- Note: here we use Amulet as the single asset, as that is all we have available in this repository.
+  -- Given that we are using only the DvP interface, that should though be a fine stand-in for
+  -- a DvP across two assets from different registries.
+  let aliceLeg = mkTransfer alice bob 100.0
+  let bobLeg = mkTransfer bob alice 20.0
+
+  -- alice proposes trade with bob
+  proposalCid <- submit alice $ createCmd OTCTradeProposal with
+    venue = provider
+    tradeCid = None
+    transferLegs = TextMap.fromList [("leg0", aliceLeg), ("leg1", bobLeg)]
+    approvers = [alice]
+
+  -- bob accepts
+  proposalCid <- submit bob $ exerciseCmd proposalCid OTCTradeProposal_Accept with
+    approver = bob
+
+  debug $ "proposalCid: " <> show proposalCid
+
+
+  return ()
+
+
 setupOtcTrade : Script AllocatedOTCTrade
 setupOtcTrade  = do
   registry <- AmuletRegistry.initialize AmuletRegistry.defaultAmuletRegistryConfig

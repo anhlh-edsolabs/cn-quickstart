@@ -17,3 +17,9 @@ plugins {
 
 rootProject.name = "quickstart"
 include("backend", "daml")
+// include("quickstart:daml")
+// include("quickstart:backend")
+// include("quickstart:frontend")
+// include("exchange:daml")
+// include("exchange:backend")
+// include("exchange:frontend")

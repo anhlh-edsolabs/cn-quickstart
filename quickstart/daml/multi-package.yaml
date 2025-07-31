@@ -4,3 +4,6 @@ packages:
 - ./external-test-sources/splice-wallet-test
 - ./licensing
 - ./licensing-tests
+- ./exchange
+- ./iou
+- ./iou-tests

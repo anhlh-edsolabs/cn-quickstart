@@ -207,6 +207,8 @@ curl_check() {
   fi
   curlArgs+=(-H "Content-Type: $contentType")
   curlArgs+=("${args[@]}")
+
+  echo "curlArgs: ${curlArgs[@]}" >&2
   response=$(curl "${curlArgs[@]}")
 
   local httpCode=$(echo "$response" | tail -n1 | tr -d '\r')

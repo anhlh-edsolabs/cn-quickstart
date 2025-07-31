@@ -31,8 +31,19 @@ tasks.register<com.digitalasset.transcode.codegen.java.gradle.JavaCodegenTask>("
     dependsOn("compileDaml")
 }
 
+tasks.register<Exec>("codeGenJS") {
+    dependsOn("compileDaml")
+    commandLine("daml", "codegen", "js", "$projectDir/exchange/.daml/dist/exchange-0.0.1.dar", "-o", "$projectDir/exchange-daml-js")
+    commandLine("daml", "codegen", "js", "$projectDir/iou/.daml/dist/iou-0.0.1.dar", "-o", "$projectDir/iou-daml-js")
+    
+    doLast {
+        println("✅ Generated JavaScript bindings in $projectDir/exchange-daml-js")
+    }
+}
+
 tasks.named("build") {
     dependsOn("codeGen")
+    dependsOn("codeGenJS")
 }
 
 // Helper function to compute SDK variables

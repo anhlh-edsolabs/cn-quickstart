@@ -1,3 +1,6 @@
 .daml/
 /log
 navigator.log
+
+
+/iou-daml-js

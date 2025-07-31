@@ -188,6 +188,12 @@ create-app-install-request: DOCKER_COMPOSE_PROFILES =
 create-app-install-request: ## Submit an App Install Request from the App User participant node
 	$(call docker-compose, run --rm container)
 
+.PHONY: create-iou
+create-iou: DOCKER_COMPOSE_FILES = -f docker/create-iou/compose.yaml
+create-iou: DOCKER_COMPOSE_PROFILES =
+create-iou: ## Create an IOU
+	$(call docker-compose, run --rm container)
+
 .PHONY: restart-backend
 restart-backend: build-backend ## Build and start the application
 	$(call docker-compose, restart backend-service)
