@@ -1,0 +1,24 @@
+module Main where
+
+import Daml.Script
+import Iou
+
+setup: Script ()
+setup = script do
+    issuer <- allocateParty "iou-issuer"
+    owner <- allocateParty "iou-owner"
+
+    debug $ "iou-issuer: " <> show issuer
+    debug $ "iou-owner: " <> show owner
+
+    cid <- submitMulti [issuer, owner][] do
+        createCmd Iou with
+            issuer = issuer
+            owner = owner
+            cash = Cash with
+                amount = 100.00
+                currency = "USD"
+
+    debug $ "iou-cid: " <> show cid
+
+    return ()

@@ -4,7 +4,9 @@ source: daml
 version: 0.0.1
 dependencies:
   - daml-prim
+  - daml-script
   - daml-stdlib
+init-script: Main.setup
 codegen: 
   js: 
     output-directory: ../iou-daml-js 
