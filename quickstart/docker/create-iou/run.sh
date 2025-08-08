@@ -10,6 +10,21 @@ set -eo pipefail
 
 source /app/utils.sh
 
+# Check if required arguments are provided
+if [ $# -lt 2 ]; then
+  echo "Usage: $0 <issuer_user_id> <owner_user_id> [cash_amount]"
+  echo "  issuer_user_id: The User ID of the IOU issuer"
+  echo "  owner_user_id: The User ID of the IOU owner"
+  echo "  cash_amount: Optional cash amount (default: 100)"
+  exit 1
+fi
+
+# Parse command line arguments
+ISSUER_USER_ID=$1
+OWNER_USER_ID=$2
+CASH_AMOUNT=${3:-100}
+ISSUER_ACCESS_TOKEN=$4
+
 create_iou() {
   local token=$1
   local issuerParty=$2
@@ -25,70 +40,90 @@ create_iou() {
 
   curl_check "http://$participant/v2/commands/submit-and-wait" "$token" "application/json" \
     --data-raw '{
-        "commands": [
-          {
-            "CreateCommand": {
-              "templateId": "#quickstart-iou:Iou.Iou",
-              "createArguments": {
-                "issuer": "'$issuerParty'",
-                "owner": "'$ownerParty'",
-                "cash": "'$cash'",
-                "meta": {
-                  "values": []
-                }
-              }
+      "actAs": [
+        "'$issuerParty'"
+      ],
+      "applicationId": "'$participantUserId'",
+      "commandId": "create-iou-'$time'",
+      "commands": [
+        {
+          "CreateCommand": {
+            "templateId": "#quickstart-iou:IouTemplate.Iou:IouHolding",
+            "createArguments": {
+              "issuer": "'$issuerParty'",
+              "owner": "'$ownerParty'",
+              "amount": "'$cash'",
+              "currency": "USD",
+              "observers": []
             }
           }
-        ],
-        "workflowId": "create-iou",
-        "applicationId": "'$participantUserId'",
-        "commandId": "create-iou-'$time'",
-        "deduplicationPeriod": {
-          "Empty": {}
-        },
-        "actAs": [
-          "'$issuerParty'"
-        ],
-        "readAs": [
-          "'$issuerParty'"
-        ],
-        "submissionId": "create-iou",
-        "disclosedContracts": [],
-        "domainId": "",
-        "packageIdSelectionPreference": []
+        }
+      ]
     }'
+    # --data-raw '{
+    #     "commands": [
+    #       {
+    #         "CreateCommand": {
+    #           "templateId": "#quickstart-iou:IouTemplate.Iou:IouHolding",
+    #           "createArguments": {
+    #             "issuer": "'$issuerParty'",
+    #             "owner": "'$ownerParty'",
+    #             "cash": '$cash'
+    #           }
+    #         }
+    #       }
+    #     ],
+    #     "workflowId": "create-iou",
+    #     "applicationId": "'$participantUserId'",
+    #     "commandId": "create-iou-'$time'",
+    #     "deduplicationPeriod": {
+    #       "Empty": {}
+    #     },
+    #     "actAs": [
+    #       "'$issuerParty'"
+    #     ],
+    #     "readAs": [
+    #       "'$issuerParty'"
+    #     ],
+    #     "submissionId": "create-iou",
+    #     "disclosedContracts": [],
+    #     "domainId": "",
+    #     "packageIdSelectionPreference": []
+    # }'
 }
 
 echo "AUTH MODE: $AUTH_MODE"
 if [ "$AUTH_MODE" == "oauth2" ]; then
 
-  IOU_ISSUER_WALLET_ADMIN_TOKEN=$(get_user_token $AUTH_IOU_ISSUER_WALLET_ADMIN_USER_NAME $AUTH_IOU_ISSUER_WALLET_ADMIN_USER_PASSWORD $AUTH_IOU_ISSUER_AUTO_CONFIG_CLIENT_ID $AUTH_IOU_ISSUER_TOKEN_URL)
-  IOU_OWNER_WALLET_ADMIN_TOKEN=$(get_user_token $AUTH_IOU_OWNER_WALLET_ADMIN_USER_NAME $AUTH_IOU_OWNER_WALLET_ADMIN_USER_PASSWORD $AUTH_IOU_OWNER_AUTO_CONFIG_CLIENT_ID $AUTH_IOU_OWNER_TOKEN_URL)
-  # DSO_PARTY=$(get_dso_party_id "$APP_USER_WALLET_ADMIN_TOKEN" "splice:2${VALIDATOR_ADMIN_API_PORT_SUFFIX}")
+  # Use the existing APP_USER environment variables for authentication
+  APP_USER_PARTICIPANT_ADMIN_TOKEN=$(get_admin_token $AUTH_APP_USER_VALIDATOR_CLIENT_SECRET $AUTH_APP_USER_VALIDATOR_CLIENT_ID $AUTH_APP_USER_TOKEN_URL)
 
-  echo "IOU_ISSUER_WALLET_ADMIN_TOKEN: $IOU_ISSUER_WALLET_ADMIN_TOKEN"
-  echo "IOU_OWNER_WALLET_ADMIN_TOKEN: $IOU_OWNER_WALLET_ADMIN_TOKEN"
+  echo "APP_USER_PARTICIPANT_ADMIN_TOKEN: $APP_USER_PARTICIPANT_ADMIN_TOKEN"
+  echo "--------------------------------"
   
-  export IOU_ISSUER_PARTY=$(get_user_party "$IOU_ISSUER_WALLET_ADMIN_TOKEN" $AUTH_IOU_ISSUER_WALLET_ADMIN_USER_ID "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}")
-  export IOU_OWNER_PARTY=$(get_user_party "$IOU_OWNER_WALLET_ADMIN_TOKEN" $AUTH_IOU_OWNER_WALLET_ADMIN_USER_ID "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}")
+  # Get party IDs from the provided User IDs
+  export IOU_ISSUER_PARTY=$(get_user_party "$APP_USER_PARTICIPANT_ADMIN_TOKEN" "$ISSUER_USER_ID" "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}")
+  export IOU_OWNER_PARTY=$(get_user_party "$APP_USER_PARTICIPANT_ADMIN_TOKEN" "$OWNER_USER_ID" "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}")
 
-  create_iou "$IOU_ISSUER_WALLET_ADMIN_TOKEN" $IOU_ISSUER_PARTY $IOU_OWNER_PARTY $AUTH_APP_USER_WALLET_ADMIN_USER_ID "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}"
+  echo "IOU_ISSUER_PARTY: $IOU_ISSUER_PARTY"
+  echo "IOU_OWNER_PARTY: $IOU_OWNER_PARTY"
+
+  create_iou "$ISSUER_ACCESS_TOKEN" "$IOU_ISSUER_PARTY" "$IOU_OWNER_PARTY" "$CASH_AMOUNT" $AUTH_APP_USER_WALLET_ADMIN_USER_ID "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}"
 
 else
-  # APP_USER_WALLET_ADMIN_TOKEN=$(generate_jwt "$AUTH_APP_USER_WALLET_ADMIN_USER_NAME" "$AUTH_APP_USER_AUDIENCE")
-  IOU_ISSUER_WALLET_ADMIN_TOKEN=$(generate_jwt "$AUTH_IOU_ISSUER_WALLET_ADMIN_USER_NAME" "$AUTH_APP_USER_AUDIENCE")
-  IOU_OWNER_WALLET_ADMIN_TOKEN=$(generate_jwt "$AUTH_IOU_OWNER_WALLET_ADMIN_USER_NAME" "$AUTH_APP_USER_AUDIENCE")
+  # Use the existing APP_USER environment variables for authentication
+  export APP_USER_PARTICIPANT_ADMIN_TOKEN=$(generate_jwt "$AUTH_APP_USER_VALIDATOR_USER_NAME" "$AUTH_APP_USER_AUDIENCE")
+  
+  APP_USER_WALLET_ADMIN_TOKEN=$(generate_jwt "$AUTH_APP_USER_WALLET_ADMIN_USER_NAME" "$AUTH_APP_USER_AUDIENCE")
 
-  echo "IOU_ISSUER_WALLET_ADMIN_TOKEN: $IOU_ISSUER_WALLET_ADMIN_TOKEN"
-  echo "IOU_OWNER_WALLET_ADMIN_TOKEN: $IOU_OWNER_WALLET_ADMIN_TOKEN"
+  echo "APP_USER_PARTICIPANT_ADMIN_TOKEN: $APP_USER_PARTICIPANT_ADMIN_TOKEN"
+  echo "APP_USER_WALLET_ADMIN_TOKEN: $APP_USER_WALLET_ADMIN_TOKEN"
+  echo "--------------------------------"
 
-  export IOU_ISSUER_PARTY=$(get_user_party "$IOU_ISSUER_WALLET_ADMIN_TOKEN" $AUTH_IOU_ISSUER_WALLET_ADMIN_USER_ID "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}")
-  export IOU_OWNER_PARTY=$(get_user_party "$IOU_OWNER_WALLET_ADMIN_TOKEN" $AUTH_IOU_OWNER_WALLET_ADMIN_USER_ID "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}")
+  # Get party IDs from the provided User IDs
+  export IOU_ISSUER_PARTY=$(get_user_party "$APP_USER_PARTICIPANT_ADMIN_TOKEN" "$ISSUER_USER_ID" "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}")
+  export IOU_OWNER_PARTY=$(get_user_party "$APP_USER_PARTICIPANT_ADMIN_TOKEN" "$OWNER_USER_ID" "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}")
 
-  create_iou "$IOU_ISSUER_WALLET_ADMIN_TOKEN" $IOU_ISSUER_PARTY $IOU_OWNER_PARTY $AUTH_APP_USER_WALLET_ADMIN_USER_ID "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}"
-
-  # DSO_PARTY=$(get_dso_party_id "$APP_USER_WALLET_ADMIN_TOKEN" "splice:2${VALIDATOR_ADMIN_API_PORT_SUFFIX}")
-
-  # create_iou "$APP_USER_WALLET_ADMIN_TOKEN" $DSO_PARTY $APP_USER_PARTY $APP_PROVIDER_PARTY $AUTH_APP_USER_WALLET_ADMIN_USER_NAME "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}"
+  create_iou "$ISSUER_ACCESS_TOKEN" "$IOU_ISSUER_PARTY" "$IOU_OWNER_PARTY" "$CASH_AMOUNT" $AUTH_APP_USER_WALLET_ADMIN_USER_NAME "canton:2${PARTICIPANT_JSON_API_PORT_SUFFIX}"
 fi
 

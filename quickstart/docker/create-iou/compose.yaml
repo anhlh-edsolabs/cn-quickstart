@@ -11,12 +11,28 @@ volumes:
 
 services:
   container:
-    extends:
-      file: ${MODULES_DIR}/splice-onboarding/compose.yaml
-      service: splice-onboarding
+    build: ${MODULES_DIR}/splice-onboarding/docker
+    container_name: create-iou-container
+    env_file:
+      - ${LOCALNET_ENV_DIR}/common.env
+      - ${LOCALNET_ENV_DIR}/app-user-auth-on.env
+      - ${MODULES_DIR}/keycloak/env/app-user/on/oauth2.env
+    environment:
+      - AUTH_MODE=${AUTH_MODE}
     volumes:
+      - ${MODULES_DIR}/splice-onboarding/docker/entrypoint.sh:/entrypoint.sh
+      - ${MODULES_DIR}/splice-onboarding/docker/health-check.sh:/app/health-check.sh
+      - ${MODULES_DIR}/splice-onboarding/docker/utils.sh:/app/utils.sh
+      - ${MODULES_DIR}/splice-onboarding/docker/app-provider.sh:/app/app-provider-auth.sh
+      - ${MODULES_DIR}/splice-onboarding/docker/app-user.sh:/app/app-user-auth.sh
       - ./run.sh:/app/scripts/on/create-iou.sh
-    entrypoint: [ "/entrypoint.sh", "--exit-on-finish" ]
+      - onboarding:/onboarding
+    healthcheck:
+      test: ["CMD", "bash", "/app/health-check.sh"]
+      interval: 5s
+      timeout: 100s
+      retries: 1000
+      start_period: 300s
+    command: [ "/app/scripts/on/create-iou.sh" ]
     networks:
       - ${DOCKER_NETWORK}
-    depends_on: !reset []

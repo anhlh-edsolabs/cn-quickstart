@@ -1,0 +1,50 @@
+module IouTemplate.Iou where
+
+-- data Cash = Cash with
+--   currency : Text
+--   amount : Decimal
+--     deriving (Eq, Show)
+
+-- template IouHolding
+--   with
+--     issuer : Party
+--     owner : Party
+--     cash : Cash
+--   where
+--     signatory issuer
+--     observer owner
+
+--     choice Transfer
+--       : ContractId IouHolding
+--       with
+--         newOwner : Party
+--       controller owner
+--       do
+--         assertMsg "newOwner cannot be equal to owner." (owner /= newOwner)
+--         create this with
+--           owner = newOwner
+template IouHolding
+  with
+    -- dso : Party
+    -- provider : Party
+    issuer : Party
+    owner : Party
+    currency : Text
+    amount : Decimal
+    observers : [Party]
+  where
+    signatory issuer, owner
+    observer observers --, provider
+
+    ensure amount > 0.0
+
+    choice Iou_Split : (ContractId IouHolding, ContractId IouHolding)
+        with
+        splitAmount: Decimal
+      controller owner
+      do
+        let restAmount = amount - splitAmount
+        splitCid <- create this with amount = splitAmount
+        restCid <- create this with amount = restAmount
+        return (splitCid, restCid)
+    

@@ -7,4 +7,4 @@ dependencies:
   - daml-stdlib
   - daml-script
 data-dependencies:
-  - ../iou/.daml/dist/iou-0.0.1.dar
+  - ../iou/.daml/dist/quickstart-iou-0.0.1.dar

@@ -1,7 +1,7 @@
 module Main where
 
 import Daml.Script
-import Iou
+import IouTemplate.Iou
 
 setup: Script ()
 setup = script do
@@ -12,12 +12,12 @@ setup = script do
     debug $ "iou-owner: " <> show owner
 
     cid <- submitMulti [issuer, owner][] do
-        createCmd Iou with
+        createCmd IouHolding with
             issuer = issuer
             owner = owner
-            cash = Cash with
-                amount = 100.00
-                currency = "USD"
+            amount = 100.00
+            currency = "USD"
+            observers = [issuer, owner]
 
     debug $ "iou-cid: " <> show cid
 
