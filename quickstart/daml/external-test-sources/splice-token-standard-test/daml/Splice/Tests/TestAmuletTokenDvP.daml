@@ -54,11 +54,13 @@ data AllocatedOTCTrade = AllocatedOTCTrade
 
 testAmuletDvP: Script ()
 testAmuletDvP = do
+  alice <- allocatePartyExact "alice"
+  bob <- allocatePartyExact "bob"
+
   registry <- AmuletRegistry.initialize AmuletRegistry.defaultAmuletRegistryConfig
   let amuletId = registry.instrumentId
 
-  alice <- allocatePartyExact "alice"
-  bob <- allocatePartyExact "bob"
+  debug $ "Amulet ID: " <> show amuletId
 
   -- featured app provider
   provider <- allocatePartyExact "trading-app-provider-party"
