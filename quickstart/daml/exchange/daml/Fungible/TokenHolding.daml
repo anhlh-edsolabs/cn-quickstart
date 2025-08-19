@@ -17,7 +17,7 @@ template TokenHolding with
   where
     signatory admin, owner
 
-    -- ensure amount > 0.0
+    ensure amount > 0.0
 
     -- Implement the Holding interface
     interface instance Api.Token.HoldingV1.Holding for TokenHolding where

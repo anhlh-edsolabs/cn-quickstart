@@ -3,10 +3,12 @@ module Fungible.TokenTransferInstruction where
 import DA.Foldable (forA_)
 import DA.List (null)
 import DA.Optional (isNone)
+import DA.Time
 
 import Splice.Api.Token.TransferInstructionV1 as Api.Token.TransferInstructionV1
 import Splice.Api.Token.MetadataV1 as Api.Token.MetadataV1
 import Splice.Api.Token.HoldingV1 as Api.Token.HoldingV1
+import DA.TextMap as TextMap ()
 
 import Fungible.TokenHolding
 
@@ -43,6 +45,8 @@ template TokenTransferInstruction
 -- | Execute the transfer instruction by moving tokens from sender to receiver
 executeTransferInstr : TokenTransferInstruction -> Api.Token.MetadataV1.ExtraArgs -> Update Api.Token.TransferInstructionV1.TransferInstructionResult
 executeTransferInstr instr extraArgs = do
+  now <- getTime
+  assertMsg "Transfer expired" (instr.transfer.executeBefore > now)
   -- Validate input holdings exist
   assertMsg "Must have input holdings" (not (null instr.transfer.inputHoldingCids))
   

@@ -1,11 +1,11 @@
 module ExchangeWorkflowTest where
 
 import Daml.Script
-import DA.Action (unless, void)
-import Exchange.ExchangeWorkflow
+import DA.Action (void)
+-- import Exchange.ExchangeWorkflow
 
 import Splice.Scripts.Util
-import Splice.Wallet.Payment
+-- import Splice.Wallet.Payment
 
 -- | Placeholder for exchange workflow test scripts 
 test : Script ()
