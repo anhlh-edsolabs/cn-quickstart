@@ -142,10 +142,10 @@ In the context of external user onboarding, topology serves several critical fun
 
 ### Files Involved
 
-- [interactive_submission.py](canton/community/app/src/pack/examples/08-interactive-submission/interactive_submission.py): Main demo script
-- [external_party_onboarding.py](canton/community/app/src/pack/examples/08-interactive-submission/external_party_onboarding.py): External party registration logic
-- [interactive_topology_util.py](canton/community/app/src/pack/examples/08-interactive-submission/interactive_topology_util.py): Utility functions for topology operations
-- [Ping.daml](canton/community/participant/src/main/daml/AdminWorkflows/Canton/Internal/Ping.daml): Demo contract template
+- [interactive_submission.py](https://github.com/hyperledger-labs/splice/blob/main/canton/community/app/src/pack/examples/08-interactive-submission/interactive_submission.py): Main demo script
+- [external_party_onboarding.py](https://github.com/hyperledger-labs/splice/blob/main/canton/community/app/src/pack/examples/08-interactive-submission/external_party_onboarding.py): External party registration logic
+- [interactive_topology_util.py](https://github.com/hyperledger-labs/splice/blob/main/canton/community/app/src/pack/examples/08-interactive-submission/interactive_topology_util.py): Utility functions for topology operations
+- [Ping.daml](https://github.com/hyperledger-labs/splice/blob/main/canton/community/participant/src/main/daml/AdminWorkflows/Canton/Internal/Ping.daml): Demo contract template
 
 ## Workflow Overview
 
