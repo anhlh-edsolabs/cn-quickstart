@@ -55,16 +55,16 @@ For testing multiple users, use separate browsers or one browser in standard mod
 
 **Where can I install CN App Quickstart dependencies?**
 
-This repository uses `direnv`, `nix`, and `docker-compose` to provide development dependencies:
+This repository uses ``direnv``, ``nix``, and ``docker-compose`` to provide development dependencies:
 
-* how to [install direnv](https://direnv.net/docs/installation.html)
-* how to [install nix](https://nix.dev/install-nix.html)
-* how to [install docker-compose](https://docs.docker.com/compose/install/)
+* how to `install direnv <https://direnv.net/docs/installation.html>`__
+* how to `install nix <https://nix.dev/install-nix.html>`__
+* how to `install docker-compose <https://docs.docker.com/compose/install/>`__
 
 **How do I authenticate on JFrog Artifactory?**
 
 To run the Quickstart App you need some binaries from Artifactory. 
-If you don't have authorization, [contact us](https://www2.digitalasset.com/contact-us-access-to-jfrog) to request Artifactory access.
+If you don't have authorization, `contact us <https://www2.digitalasset.com/contact-us-access-to-jfrog>`__ to request Artifactory access.
 
 **How do I set up my JFrog credentials?**
 
@@ -82,8 +82,8 @@ For more information see the Installation Guide.
 
 **Do I need to install Nix?**
 
-You can use the project files in the `quickstart` directory as a standalone project without nix, but you will need to provide binary dependencies manually.
-We do not offer guidance on how to do this, but you can find the required binaries in the `quickstart/compose.yaml` file.
+You can use the project files in the ``quickstart`` directory as a standalone project without nix, but you will need to provide binary dependencies manually.
+We do not offer guidance on how to do this, but you can find the required binaries in the ``quickstart/compose.yaml`` file.
 
 **Why is Nix-shell unable to download my SSL certificate?**
 
@@ -136,6 +136,12 @@ Always prefer to use the make commands.
 Please refer to the `MainNet <https://docs.dev.sync.global/app_dev/overview/version_information.html>`__ 
 and `TestNet <https://docs.test.sync.global/app_dev/overview/version_information.html>`__ 
 Splice documentation for guidance regarding version information.
+
+**How do I set the Daml SDK version?**
+
+The Daml SDK version is set in ``.env`` as ``DAML_RUNTIME_VERSION``.
+
+You can run ``make install-daml-sdk SDK_VERSION`` at any time to download and install another version of the daml sdk.
 
 **How do I obtain Splice contract DAR files?**
 
@@ -297,6 +303,35 @@ The CN App Quickstart provides several observability options:
 
 3. Consolidated logs view in Grafana
 
+**Why do backend configurations disappear after restarting the backend service?**
+
+Backend service configurations (including tenant registrations, application state, and service registrations) are stored in memory and lost when the service is restarts.
+Run ``make restart-backend`` to rebuild and restart the backend service with configurations restored.
+
+Persistent storage is in our roadmap, but has not been implemented yet.
+
+**How can I resolve a backend build failure?**
+
+Build failures may occur if the Daml SDK is not installed or is corrupted.
+If you see errors on ``make build`` such as:
+
+::
+
+   > Task :backend:extractProto FAILED
+
+   FAILURE: Build failed with an exception.
+
+   * What went wrong:
+   Execution failed for task ':backend:extractProto'.
+   > Could not resolve all files for configuration ':backend:protobuf'.
+      > Could not find com.daml:ledger-api-proto:.
+      Required by:
+            project :backend
+
+Then verify that the ``.env`` file contains an accurate daml SDK value in ``DAML_RUNTIME_VERSION=``.
+
+Find the daml SDK version with ``make check-daml-sdk``.
+
 **Infrastructure & environment**
 --------------------------------
 
@@ -331,12 +366,18 @@ Contact your sponsoring Super Validator agent for connection information.
 
 **How can I operate a ``DevNet`` node?**
 
-Use the Docker compose ``DevNet`` [deployment from Splice](https://docs.dev.sync.global/validator_operator/validator_compose.html).
+Use the Docker compose ``DevNet`` `deployment from Splice <https://docs.dev.sync.global/validator_operator/validator_compose.html>`__.
 We recommend using the Docker compose configuration for integration and long-term testing.
+
+**Where do I start when I am ready to run an application on my node?**
+
+Refer to the :externalref:`CN Utilities documentation <utility-prerequisites>` for application-specific deployment instructions with an example.
+As a general rule, deploying an app on your node requires installing the application DARs. 
+CN Utilities also includes an image that supports uploading the DARs within your cluster.
 
 **How does my team gain access to an enterprise license?**
 
-Get an Enterprise evaluation license by filling out our [contact form](https://www.digitalasset.com/contact-us?comments=I'm%20requesting%20access%20to%20jFrog).
+Get an Enterprise evaluation license by filling out our `contact form <https://www.digitalasset.com/contact-us?comments=I'm%20requesting%20access%20to%20jFrog>`__.
 The evaluation license is good for six months and is renewable.
 Please allow 24 hours for the request to be processed.
 The evaluation license includes VPN access to ``DevNet``.
@@ -363,6 +404,11 @@ Keycloak credentials are set in ``oauth2.env`` with the following credentials:
 The Keycloak user must have the same ID as the ledger user’s ID.
 This should be reflected in the default behavior.
 
+**How can I begin using lnav with the Quickstart application on MacOS?**
+
+On MacOS, ``lnav`` can be installed with ``brew install lnav``.
+Running ``make capture-logs`` requires ``coreutils`` to be installed with ``brew install coreutils``.
+
 **Best practices & common pitfalls**
 ------------------------------------
 
@@ -384,6 +430,8 @@ Best practices include:
 **What's the recommended way to query ledger data?**
 
 The Participant Query Store (PQS) is recommended for querying ledger data.
+
+.. _make-target-reference:
 
 **CN App Quickstart Make target reference**
 ===========================================

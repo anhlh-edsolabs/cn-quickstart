@@ -4,3 +4,11 @@ navigator.log
 
 
 /iou-daml-js
+/external-test-sources/splice-token-standard-test/target/
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

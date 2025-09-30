@@ -3,10 +3,9 @@
 
 import React, { useEffect, useState } from 'react'
 import {
-    useTenantRegistrationStore,
-    TenantRegistration,
+    useTenantRegistrationStore
 } from '../stores/tenantRegistrationStore'
-
+import type { TenantRegistrationRequest } from "../openapi.d.ts"
 import {useToast} from '../stores/toastStore';
 import api from '../api';
 import {Client, FeatureFlags} from "../openapi";
@@ -20,12 +19,11 @@ const TenantRegistrationView: React.FC = () => {
         deleteTenantRegistration,
     } = useTenantRegistrationStore()
 
-    const [formData, setFormData] = useState<TenantRegistration>({
+    const [formData, setFormData] = useState<TenantRegistrationRequest>({
         tenantId: '',
         partyId: '',
         clientId: '',
         issuerUrl: '',
-        internal: false,
         walletUrl: '',
         users: []
     })
@@ -56,24 +54,47 @@ const TenantRegistrationView: React.FC = () => {
         }))
     }
 
+    // Validation driven by feature flags
+    const validate = (): string | null => {
+        const t = formData.tenantId.trim()
+        const p = formData.partyId.trim()
+        if (!t) return 'Tenant ID is required'
+        if (!p) return 'Party ID is required'
+
+        if (featureFlags?.authMode === 'oauth2') {
+            if (!formData.clientId?.trim()) return 'Client ID is required (OAuth2)'
+            if (!formData.issuerUrl?.trim()) return 'Issuer URL is required (OAuth2)'
+        }
+
+        if (featureFlags?.authMode === 'shared-secret') {
+            if (!formData.users || formData.users.length === 0) {
+                return 'At least one user is required (Shared Secret)'
+            }
+        }
+        return null
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        const error = validate()
+        if (error) {
+            toast.displayError(error)
+            return
+        }
         await createTenantRegistration(formData)
         setFormData({
             tenantId: '',
             partyId: '',
             clientId: '',
             issuerUrl: '',
-            internal: false,
             walletUrl: '',
             users: []
-
         })
     }
 
-    const handleDelete = async (clientId: string) => {
+    const handleDelete = async (tenantId: string) => {
         if (window.confirm('Are you sure you want to delete this tenant registration?')) {
-            await deleteTenantRegistration(clientId)
+            await deleteTenantRegistration(tenantId)
         }
     }
 
@@ -163,7 +184,7 @@ const TenantRegistrationView: React.FC = () => {
                           id="users"
                           name="users"
                           className="form-control"
-                          value={formData.users}
+                          value={Array.isArray(formData.users) ? formData.users.join(', ') : (formData.users ?? '')}
                           onChange={handleChange}
                       />
                   </div>

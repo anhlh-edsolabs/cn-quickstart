@@ -3,20 +3,14 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react'
 import { useToast } from './toastStore'
-// @ts-ignore
-import openApi from '../../../common/openapi.yaml'
 import api from "../api.ts";
+import type {
+    Client,
+    TenantRegistration,
+    TenantRegistrationRequest
+} from '../openapi.d.ts';
+import {withErrorHandling} from "../utils/error";
 
-
-export interface TenantRegistration {
-    tenantId: string
-    partyId: string
-    clientId: string
-    issuerUrl: string
-    walletUrl: string
-    internal: boolean
-    users: string[]
-}
 
 interface TenantRegistrationState {
     registrations: TenantRegistration[]
@@ -24,8 +18,8 @@ interface TenantRegistrationState {
 
 interface TenantRegistrationContextType extends TenantRegistrationState {
     fetchTenantRegistrations: () => Promise<void>
-    createTenantRegistration: (registration: TenantRegistration) => Promise<void>
-    deleteTenantRegistration: (clientId: string) => Promise<void>
+    createTenantRegistration: (registration: TenantRegistrationRequest) => Promise<void>
+    deleteTenantRegistration: (tenantId: string) => Promise<void>
     setRegistrations: React.Dispatch<React.SetStateAction<TenantRegistration[]>>
 }
 
@@ -43,44 +37,45 @@ export const TenantRegistrationProvider = ({
     const [registrations, setRegistrations] = useState<TenantRegistration[]>([])
     const toast = useToast()
 
-    const fetchTenantRegistrations = useCallback(async () => {
-        try {
-            const client = await api.getClient()
-            // New name: listTenantRegistrations
-            const response = await client.listTenantRegistrations()
-            setRegistrations(response.data)
-        } catch (error) {
-            toast.displayError('Error fetching tenant registrations')
-        }
-    }, [toast])
+    const fetchTenantRegistrations = useCallback(
+        withErrorHandling(`Fetching Tenant Registrations`)(async () => {
+            const client: Client = await api.getClient();
+            const response = await client.listTenantRegistrations();
+            setRegistrations(response.data);
+        }),
+        [setRegistrations]
+    );
 
     const createTenantRegistration = useCallback(
-        async (registration: TenantRegistration) => {
-            try {
-                const client = await api.getClient()
-                // New name: createTenantRegistration
-                const response = await client.createTenantRegistration({}, registration)
-                if (response.status !== 200) {
-                    throw new Error(`Unexpected response status: ${response.status}`)
-                }
-                setRegistrations((prev) => [...prev, response.data])
-            } catch (error) {
-                toast.displayError('Error creating tenant registration')
+        withErrorHandling(`Creating Tenant Registration`)(async (request: TenantRegistrationRequest) => {
+            const client: Client = await api.getClient()
+            // New name: createTenantRegistration
+            const response = await client.createTenantRegistration({}, request)
+            const created = (response as any)?.data as TenantRegistration | undefined;
+            if (created?.tenantId) {
+                setRegistrations(prev => {
+                    if (prev.some(reg =>
+                        reg.tenantId === created.tenantId ||
+                        reg.clientId === created.clientId )) return prev;
+                    return [...prev, created];
+                });
+            } else {
+                // No body? Fallback to a fresh list to keep UI in sync.
+                const list = await client.listTenantRegistrations();
+                setRegistrations(list.data);
             }
-        },
-        [toast]
+            toast.displaySuccess('Tenant registration created')
+        }),
+        [withErrorHandling, setRegistrations, toast]
     )
 
-    const deleteTenantRegistration = useCallback(async (tenantId: string) => {
-        try {
-            const client = await api.getClient()
-            // New name: deleteTenantRegistration
+    const deleteTenantRegistration = useCallback(
+        withErrorHandling(`Deleting Tenant Registration`)(async (tenantId: string) => {
+            const client: Client = await api.getClient()
             await client.deleteTenantRegistration({ tenantId: tenantId })
             setRegistrations((prev) => prev.filter((reg) => reg.tenantId !== tenantId))
-        } catch (error) {
-            toast.displayError('Error deleting tenant registration')
-        }
-    }, [toast])
+            toast.displaySuccess('Tenant registration deleted')
+        }), [setRegistrations, toast])
 
     return (
         <TenantRegistrationContext.Provider

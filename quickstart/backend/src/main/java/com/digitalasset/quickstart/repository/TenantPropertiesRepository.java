@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
@@ -90,14 +91,19 @@ public class TenantPropertiesRepository {
      * Save (or overwrite) a tenant's extra properties.
      * Called when we create a new tenant registration at runtime, etc.
      */
-    public void addTenant(String tenantId, TenantProperties props) {
-        tenants.put(tenantId, props);
+    public void addTenant(String tenantId, TenantProperties props) throws IllegalArgumentException {
+        TenantProperties previous = tenants.putIfAbsent(tenantId, props);
+        if (previous != null) {
+            throw new IllegalArgumentException("Duplicate tenantId not allowed: " + tenantId);
+        }
     }
 
     /**
      * Remove a tenant’s extra properties
      */
     public void removeTenant(String tenantId) {
-        tenants.remove(tenantId);
+        if (tenants.remove(tenantId) == null) {
+            throw new NoSuchElementException(String.format("No tenant found for tenantId = %s.", tenantId ));
+        }
     }
 }

@@ -23,23 +23,22 @@ In the Makefile, the command's target is:
    build-frontend: ## Build the frontend application
    @cd frontend && npm install && npm run build
 
-`.PHONY` is a special `built-in target <https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html>`__ used to indicate that build-frontend is strictly a target name and does not correspond to a file.
+``.PHONY`` is a special `built-in target <https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html>`__ used to indicate that build-frontend is strictly a target name and does not correspond to a file.
 
-`build-frontend:` Is a build target that can be invoked directly via `make <target>` or indirectly as a dependency for another target. 
+``build-frontend:`` Is a build target that can be invoked directly via ``make <target>`` or indirectly as a dependency for another target.
 If not marked as a phony-target it is treated as a file, and the last-modified timestamp compared to its dependencies in the usual manner.
 
-`#` is a line comment delimiter, identical to a shell script.
+``#`` is a line comment delimiter, identical to a shell script.
 
-`##` is not a Make concept, but is used by convention as a doc-string to generate the usage displayed by make help.
+``##`` is not a Make concept, but is used by convention as a doc-string to generate the usage displayed by make help.
 
-`<tab>@cd frontend && npm install && npm run build` is a shell command to be executed when the target is invoked. 
-Unless this is a phony-target, Make expects this command to regenerate the target file. 
-By default, Make prints each shell command to stdout immediately before it executes it; 
-this is suppressed if the command is prepended with a `@`.
+``<tab>@cd frontend && npm install && npm run build`` is a shell command to be executed when the target is invoked.
+Unless this is a phony-target, Make expects this command to regenerate the target file.
+By default, Make prints each shell command to stdout immediately before it executes it;
+this is suppressed if the command is prepended with a ``@``.
 
 **NOTE:** *The shell-command* **MUST** *be indented by a literal*
-**TAB** *character, the equivalent number of spaces* **WILL NOT
-WORK**\ *.*
+**TAB** *character, the equivalent number of spaces* **WILL NOT WORK**\ *.*
 
 You can see dependency list in action with the top-level build target:
 
@@ -48,12 +47,12 @@ You can see dependency list in action with the top-level build target:
    .PHONY: build
    build: build-frontend build-backend build-daml build-docker-images
 
-When the target is invoked, the dependency targets are run and brought up to date (or invoked in the case of phony targets) before any shell command is executed.
+When the target is invoked dependency targets update and run before shell commands are executed.
 
-Other Make features used in the existing file include:
+Other Make features include:
 
-`define` which is used to `define multiline variables <https://www.gnu.org/software/make/manual/html_node/Multi_002dLine.html>`__. In this case,
-we use it to define a simple macro (`open-url-target`) to define cross-platform browser interaction targets (try `make open-app-ui` once the application is started for an example). 
+``define`` which is used to `define multiline variables <https://www.gnu.org/software/make/manual/html_node/Multi_002dLine.html>`__. 
+It's used to define a simple macro (``open-url-target``) for cross-platform browser interaction targets e.g. ``make open-app-ui``. 
 The file also includes:
 
 .. code-block:: text
@@ -64,16 +63,16 @@ The file also includes:
    $(DOCKER_COMPOSE_PROFILES) $(1)
    endef
 
-This provides DRY abstraction around calls to `docker-compose`.
+This provides DRY abstraction around calls to ``docker-compose``.
 
-`call` which is used to `invoke a variable as a function <https://www.gnu.org/software/make/manual/html_node/Call-Function.html>`__.
+``call`` which is used to `invoke a variable as a function <https://www.gnu.org/software/make/manual/html_node/Call-Function.html>`__.
 
-Note that the format of a call invocation is: 
-`$(call <cmd>[, <args>]*)`. So `$(call open-url-target`, `open-app-ui`, http://localhost:3000) calls `open-url-target` with `$(1)` set to the string `open-app-ui` and `$(2)` set to the URL.
+The format of a call invocation is:
+``$(call <cmd>[, <args>]*)``. So ``$(call open-url-target``, ``open-app-ui``, http://localhost:3000) calls ``open-url-target`` with ``$(1)`` set to the string ``open-app-ui`` and ``$(2)`` set to the URL.
 
-Similarly, the `make status` target uses `$(call docker-compose, ps)` to run `docker-compose ps` with the default arguments. 
-This happens via the `docker-compose` function discussed above. 
-Removing the `@` allows you to see the expanded command.
+Similarly, the ``make status`` target uses ``$(call docker-compose, ps)`` to run ``docker-compose ps`` with the default arguments.
+This happens via the ``docker-compose`` function discussed above.
+Removing the ``@`` allows you to see the expanded command.
 
 .. code-block:: text
 
@@ -81,4 +80,4 @@ Removing the `@` allows you to see the expanded command.
     docker compose -f compose.yaml --env-file .env --profile localnet \
     --env-file docker/localnet.env --profile observability ps
 
-`eval <https://www.gnu.org/software/make/manual/html_node/Eval-Function.html>`__ is used to treat the result of calling `open-url-target` as a macro to define dynamic make targets.
+`eval <https://www.gnu.org/software/make/manual/html_node/Eval-Function.html>`__ is used to treat the result of calling ``open-url-target`` as a macro to define dynamic make targets.

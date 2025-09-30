@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@modyfi/vite-plugin-yaml": "^1.1.1",
-    "axios": "^1.9.0",
+    "axios": "^1.12.1",
     "openapi-client-axios": "^7.5.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -30,6 +30,6 @@
     "globals": "^15.9.0",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^6.3.5"
+    "vite": "^6.3.6"
   }
 }

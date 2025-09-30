@@ -144,6 +144,14 @@ After starting the application with `make start` you can access the following UI
 
 The `*.localhost` domains will resolve to your local host IP `127.0.0.1`.
 
+## External Token Transfers
+
+For external integrations requiring token transfers, the system uses Registry API endpoints rather than direct contract queries. 
+Unlike direct contract access, external token transfers are handled through Registry API endpoints exposed by the Scan app.
+
+**LocalNet Endpoint:**
+Transfer Factory: `http://scan.localhost:4000/registry/transfer-instruction/v1/transfer-factory`
+
 ## Exploring Quickstart Docker Compose
 
 Before exploring advanced topics, we recommend familiarizing yourself with the core components of the Licensing Model Workflow within Quickstart. 
@@ -341,6 +349,83 @@ Within the script, the acquired information can be shared with the backend servi
 EOF
 ```
 In this context, `share_file` is a utility function that writes the provided content (the second argument) to the specified file (the first argument) on the shared volume `onboarding`. This volume is also mounted in the `backend-service`, and the startup script (docker/backend-service/start.sh) sources the newly shared script prior to executing the main command of the backend service, thereby ensuring that the `APP_PROVIDER_PARTY` environment variable is available to the service.
+
+## Local Development
+
+### Frontend
+
+#### Restart frontend
+Run:
+```bash
+make restart-frontend
+```
+This target restarts the frontend and handles any required rebuilds.
+
+#### Vite development
+Use Vite's hot-module reloading for fast UI iteration:
+
+```bash
+make start-vite-dev
+```
+or, if Quickstart is already running:
+```bash
+make vite-dev
+```
+Open the app at: http://app-provider.localhost:5173
+
+Note: Use the same host/port so OAuth redirects (Keycloak) continue to work.
+
+#### Debugging in VS Code
+Create or update quickstart/frontend/.vscode/launch.json with:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Vite: Chrome Debug",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://app-provider.localhost:5173",
+      "webRoot": "${workspaceFolder}/quickstart/frontend/src"
+    }
+  ]
+}
+```
+
+This launches Chrome against the Vite server and maps breakpoints to your source files. If you change user sessions (login/logout) or Keycloak redirects occur, reload the page so VS Code can resolve sources.
+
+### Backend service
+
+#### Restart backend
+Run:
+```bash
+make restart-backend
+```
+This target restarts the backend, handles dependent services (e.g., register-app-user-tenant), and rebuilds the service if needed.
+
+#### Debug backend service
+Enable remote JVM debugging by setting:
+```bash
+export DEBUG_ENABLED=true
+make restart-backend
+```
+This opens port 5005. Use the following JVM agent options for your remote debugger:
+```
+-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+```
+Configure your IDE (IntelliJ, VS Code) to attach to port 5005 for step-through debugging.
+
+Example in IntelliJ Idea
+![remote-debug-settings](sdk/docs/images/remote-debug-settings.png)
+
+### Viewing logs
+For interactive local log inspection we recommend lnav (https://lnav.org/). Install the Canton log format and use it to view ``*.clog`` files. Example Canton lnav format definition:
+https://github.com/hyperledger-labs/splice/blob/main/canton/canton-json.lnav.json
+
+Open the logs directory with lnav to filter and analyze logs efficiently.
+
+
 
 
 ## License
