@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Use the official Canton image as base
-FROM ghcr.io/digital-asset/decentralized-canton-sync/docker/canton:0.4.7
+FROM ghcr.io/digital-asset/decentralized-canton-sync/docker/canton:0.4.20
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
