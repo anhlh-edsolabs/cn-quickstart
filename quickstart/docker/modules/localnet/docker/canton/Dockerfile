@@ -4,6 +4,9 @@
 # Use the official Canton image as base
 FROM ghcr.io/digital-asset/decentralized-canton-sync/docker/canton:0.4.20
 
+# Switch to root user for installations
+USER root
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
